@@ -45,12 +45,14 @@ architecture Behavioral of Bubble_Sort is
                    SEGMENTS : out std_logic_vector(7 downto 0));
     end component;
 
-    component RAM 
-        Port ( IN_DATA  : in  STD_LOGIC_VECTOR (7 downto 0);
-	           OUT_DATA : out STD_LOGIC_VECTOR (7 downto 0); 
-                   ADDR : in  STD_LOGIC_VECTOR (3 downto 0);
-                     WE : in  STD_LOGIC; 
-                    CLK : in  STD_LOGIC);
+    component RegisterFile is
+        Port ( D_IN   : in     STD_LOGIC_VECTOR (7 downto 0);
+               DX_OUT : out    STD_LOGIC_VECTOR (7 downto 0);
+               DY_OUT : out    STD_LOGIC_VECTOR (7 downto 0);
+               ADRX   : in     STD_LOGIC_VECTOR (4 downto 0);
+               ADRY   : in     STD_LOGIC_VECTOR (4 downto 0);
+               WE     : in     STD_LOGIC;
+               CLK    : in     STD_LOGIC);
     end component;
 
     component my_fsm4
@@ -80,17 +82,6 @@ architecture Behavioral of Bubble_Sort is
                COUNT : out STD_LOGIC_VECTOR (3 downto 0);
                  RCO : out STD_LOGIC);
     end component;
-    
-    component Cnt_8B
-            Port ( RESET : in STD_LOGIC;
-                      EN : in STD_LOGIC;
-                     CLK : in STD_LOGIC;
-                      LD : in STD_LOGIC;
-                      UP : in STD_LOGIC;
-                     DIN : in STD_LOGIC_VECTOR (7 downto 0);
-                   COUNT : out STD_LOGIC_VECTOR (7 downto 0);
-                     RCO : out STD_LOGIC);
-        end component;
 
     component Mux_2x1
         Port (     A : in STD_LOGIC_VECTOR (7 downto 0);
@@ -182,30 +173,10 @@ begin
                    COUNT => cnt1,
                    RCO => s1);
                    --RCO => rco1);
-
-    CNTR2: Cnt_8B 
-        port map ( RESET => CLR,
-                   EN => en2,
-                   --CLK => CLK,
-                   CLK => sclk, 
-                   LD => '0',
-                   UP => '1',
-                   DIN => "00000000",
-                   COUNT => cnt2,
-                   RCO => s2);
-                   --RCO => rco2);
                
     MY_ROM: rom_16X8
         Port map ( ADDR => cnt1, 
                    DATA => rom_out);
-
-    MY_RAM: RAM 
-        port map ( IN_DATA => ram_in,
-                   OUT_DATA => ram_out,
-                   ADDR => cnt1,
-                   WE => we,
-                   CLK => sclk);
-                   --CLK => CLK);
     
     REG1: reg
         Port map (D => ram_out,
