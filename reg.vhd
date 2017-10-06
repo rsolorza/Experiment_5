@@ -2,7 +2,7 @@
 -- Company: 
 -- Engineer: 
 -- 
--- Create Date: 10/06/2017 03:42:56 PM
+-- Create Date: 09/18/2017 12:51:13 PM
 -- Design Name: 
 -- Module Name: reg - Behavioral
 -- Project Name: 
@@ -32,12 +32,21 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity reg is
---  Port ( );
+  Port (      D : in std_logic_vector(7 downto 0);
+         CLK,LD : in std_logic;
+              Q : out std_logic_vector(7 downto 0));
 end reg;
 
 architecture Behavioral of reg is
 
 begin
-
+    process (D, CLK, LD)
+    begin
+        if (rising_edge(CLK)) then
+            if(LD = '1') then
+                Q <= D;
+            end if;
+         end if;
+      end process;
 
 end Behavioral;

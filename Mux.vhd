@@ -2,9 +2,9 @@
 -- Company: 
 -- Engineer: 
 -- 
--- Create Date: 10/06/2017 03:39:53 PM
+-- Create Date: 09/19/2017 01:03:59 PM
 -- Design Name: 
--- Module Name: Mux - Behavioral
+-- Module Name: Mux_2x1 - Behavioral
 -- Project Name: 
 -- Target Devices: 
 -- Tool Versions: 
@@ -22,22 +22,25 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
+entity Mux_2x1 is
+    Port ( A : in STD_LOGIC_VECTOR (7 downto 0);
+           B : in STD_LOGIC_VECTOR (7 downto 0);
+           SEL : in STD_LOGIC;
+           OUTPUT : out STD_LOGIC_VECTOR (7 downto 0));
 
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+end Mux_2x1;
 
-entity Mux is
---  Port ( );
-end Mux;
-
-architecture Behavioral of Mux is
+architecture Behavioral of Mux_2x1 is
 
 begin
-
+    myProcess: process (A, B, SEL)
+    begin 
+    
+        if (SEL = '0') then
+            OUTPUT <= A;
+        else
+            OUTPUT <= B;
+        end if;
+    end process;
 
 end Behavioral;
