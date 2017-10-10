@@ -27,14 +27,14 @@ entity RegisterFile is
     Port ( D_IN   : in     STD_LOGIC_VECTOR (7 downto 0);
            DX_OUT : out    STD_LOGIC_VECTOR (7 downto 0);
            DY_OUT : out    STD_LOGIC_VECTOR (7 downto 0);
-           ADRX   : in     STD_LOGIC_VECTOR (4 downto 0);
-           ADRY   : in     STD_LOGIC_VECTOR (4 downto 0);
+           ADRX   : in     STD_LOGIC_VECTOR (3 downto 0);
+           ADRY   : in     STD_LOGIC_VECTOR (3 downto 0);
            WE     : in     STD_LOGIC;
            CLK    : in     STD_LOGIC);
 end RegisterFile;
 
 architecture Behavioral of RegisterFile is
-	TYPE memory is array (0 to 31) of std_logic_vector(7 downto 0);
+	TYPE memory is array (0 to 15) of std_logic_vector(7 downto 0);
 	SIGNAL REG: memory := (others=>(others=>'0'));
 begin
 

@@ -22,24 +22,29 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
-entity Mux_2x1 is
+entity Mux_3x2 is
     Port ( A : in STD_LOGIC_VECTOR (7 downto 0);
            B : in STD_LOGIC_VECTOR (7 downto 0);
-           SEL : in STD_LOGIC;
+           C : in STD_LOGIC_VECTOR (7 downto 0);
+           SEL : in STD_LOGIC_VECTOR (1 downto 0);
            OUTPUT : out STD_LOGIC_VECTOR (7 downto 0));
 
-end Mux_2x1;
+end Mux_3x2;
 
-architecture Behavioral of Mux_2x1 is
+architecture Behavioral of Mux_3x2 is
 
 begin
-    myProcess: process (A, B, SEL)
+    myProcess: process (A, B, C, SEL)
     begin 
     
-        if (SEL = '0') then
+        if (SEL = "00") then
             OUTPUT <= A;
-        else
+        elsif (SEL = "01") then
             OUTPUT <= B;
+        elsif (SEL = "11") then
+            OUTPUT <= C;
+        else
+            OUTPUT <= "11111111";
         end if;
     end process;
 

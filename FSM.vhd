@@ -22,127 +22,90 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 
 entity my_fsm4 is 
-    port (                RCO1, RCO2, BTN ,CLK, RESET : in  std_logic;  
-            LD1, LD2, SEL1, SEL2, CLR, UP, EN, EN2, WE : out std_logic;
-                                                    Y : out std_logic_vector (2 downto 0));  
+    port (      RCO1, RCO2, RCO3, BTN ,CLK, LT : in  std_logic;  
+                    WE, CLR, CLR2, EN, LD, EN2 : out std_logic;
+                                        PRESET : out std_logic_vector (3 downto 0);
+                                             Y : out std_logic_vector (2 downto 0);
+                                           SEL : out std_logic_vector (1 downto 0));
 end my_fsm4;
 
 architecture fsm4 of my_fsm4 is
-   type state_type is (DISPLAY,TRANSFER,LOAD_REG_1,LOAD_REG_2,WRITE_1,WRITE_2); 
+   type state_type is (DISPLAY, TRANSFER, COMPARE, SWAP1, SWAP2); 
    signal PS,NS : state_type; 
 begin
-   sync_proc: process(CLK,NS,RESET)
+   sync_proc: process(CLK, NS)
    begin
-     if (RESET = '1') then  
-	     PS <= DISPLAY; 
-     elsif (rising_edge(CLK)) then  
+     if (rising_edge(CLK)) then  
 	     PS <= NS; 
      end if; 
    end process sync_proc; 
 
-   comb_proc: process(PS, RCO1, RCO2, BTN)
+   comb_proc: process(PS, RCO1, RCO2, RCO3, BTN, LT)
    begin
       -- Z1: the Moore output; Z2: the Mealy output
-      LD1 <= '0'; LD2 <= '0'; SEL1 <= '0'; SEL2 <= '0'; CLR <= '0'; UP <= '0'; EN <= '0'; WE <= '0'; EN2 <= '0'; -- pre-assign the outputs
+      WE <= '0'; CLR <= '0'; CLR2 <= '0'; EN <= '0'; EN2 <= '0'; SEL <= "00"; PRESET <= "0000"; -- pre-assign the outputs
       case PS is 
-         when DISPLAY =>    -- items regarding state ST0
-            LD1 <= '0'; 
-            LD2 <= '0'; 
-            SEL1 <= '0'; 
-            SEL2 <= '0'; 
-            UP <= '1'; 
-            EN <= '1';
-            WE <= '0';
-            EN2 <= '0';
+         when DISPLAY =>    -- items regarding state ST0 
+            EN <= '1';           
             
             if (BTN = '0') then
                 NS <= DISPLAY; 
-                CLR <= '0';
             else 
                 NS <= TRANSFER; 
                 CLR <= '1';
             end if;
 				
          when TRANSFER =>    -- items regarding state ST1
-            LD1 <= '0'; 
-            LD2 <= '0'; 
-            SEL1 <= '0'; 
-            SEL2 <= '1'; 
-            UP <= '1'; 
-            EN <= '1'; 
             WE <= '1';
-            CLR <= '0';
-            EN2 <= '0';
+            EN <= '1'; 
+            SEL <= "11"; -- pre-assign the outputs
             
             if (RCO1 = '0') then 
 				   NS <= TRANSFER;   
             else  
-				   NS <= LOAD_REG_1;  
+				   NS <= COMPARE;
+				   PRESET <= "0001"; 
+				   LD <= '1';   				   
             end if; 
 				
-         when LOAD_REG_1 =>    -- items regarding state ST2
-            LD1 <= '1'; 
-            LD2 <= '0'; 
-            SEL1 <= '0'; 
-            SEL2 <= '0'; 
-            UP <= '1';
-            CLR <= '0'; 
-            EN <= '1';
-            EN2 <= '0';
-            WE <= '0';
-            
-            NS <= LOAD_REG_2;
-            
-         when LOAD_REG_2 =>    -- items regarding state ST3
-            LD1 <= '0'; 
-            LD2 <= '1'; 
-            SEL1 <= '0'; 
-            SEL2 <= '0'; 
-            UP <= '0'; 
-            EN <= '1';
-            CLR <= '0';
-            WE <= '0';
-            EN2 <= '0';
-            
-            NS <= WRITE_1;
-		 
-		 when WRITE_1 =>
-            LD1 <= '0'; 
-            LD2 <= '0'; 
-            SEL1 <= '1'; 
-            SEL2 <= '0'; 
-            UP <= '1'; 
-            EN <= '1';
-            CLR <= '0';
-            WE <= '1';
-            EN2 <= '0';
-            
-            NS <= WRITE_2;
-		 
-		 when WRITE_2 =>
-            LD1 <= '0'; 
-            LD2 <= '0'; 
-            SEL1 <= '0'; 
-            SEL2 <= '0'; 
-            UP <= '1'; 
-            EN <= '0';
-            WE <= '1';
-            CLR <= '0';
-            EN2 <= '1';
-            
-            if (RCO1 = '1') then
+         when COMPARE =>    -- items regarding state ST2
+            if (LT = '1') then 
+                NS <= COMPARE;
                 EN <= '1';
-            end if;
+                EN2 <= '1';   
+            else  
+                NS <= SWAP1;
+                EN <= '0';                      
+            end if;    
             
-            if(RCO2 = '0') then
-                NS <= LOAD_REG_1;
-            else 
-                NS <= DISPLAY; 
-                --CLR <= '1';
-            end if;
+         when SWAP1 =>    -- items regarding state ST3
+            WE <= '1';
+            SEL <= "00";
+            EN <= '1';
+            NS <= SWAP2;
+            	 
+		 when SWAP2 =>
+            WE <= '1'; 
+            EN <= '0';
+            SEL <= "01";
+            if (RCO3 = '1') then 
+                NS <= DISPLAY;  
+                CLR <= '1';
+                CLR2 <= '1';
+            elsif (RCO2 = '0' and RCO3 = '0') then
+                NS <= COMPARE;
+                EN2 <= '1';
+            else
+                NS <= COMPARE;
+                CLR <= '1';
+                PRESET <= "0001";
+                LD <= '1';
+                EN2 <= '1';
+            end if;   
+            
 		 
          when others => -- the catch all condition
-            LD1 <= '0'; LD2 <= '0'; SEL1 <= '0'; SEL2 <= '0'; CLR <= '0'; UP <= '0'; EN <= '0';
+            WE <= '0'; CLR <= '0'; CLR2 <= '0'; EN <= '0'; EN2 <= '0'; SEL <= "00"; PRESET <= "0000";
       end case; 
 		
    end process comb_proc; 
@@ -150,9 +113,8 @@ begin
    with PS select
       Y <= "000" when DISPLAY, 
            "001" when TRANSFER, 
-           "010" when LOAD_REG_1, 
-           "011" when LOAD_REG_2,
-           "100" when WRITE_1,
-           "101" when WRITE_2, 
+           "010" when COMPARE, 
+           "011" when SWAP1,
+           "100" when SWAP2,
            "111" when others; 
 end fsm4;
