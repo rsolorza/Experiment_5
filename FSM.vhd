@@ -23,15 +23,15 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity my_fsm4 is 
     port (      RCO1, RCO2, RCO3, BTN ,CLK, LT : in  std_logic;  
-                    WE, CLR, CLR2, EN, LD, EN2 : out std_logic;
+              WE, CLR1, CLR2, CLR3, EN, LD, EN2 : out std_logic;
                                         PRESET : out std_logic_vector (3 downto 0);
                                              Y : out std_logic_vector (2 downto 0);
                                            SEL : out std_logic_vector (1 downto 0));
 end my_fsm4;
 
 architecture fsm4 of my_fsm4 is
-   type state_type is (DISPLAY, TRANSFER, COMPARE, SWAP1, SWAP2); 
-   signal PS,NS : state_type; 
+   type state_type is (DISPLAY, TRANSFER, COMPARE, SWAP1, SWAP2, RESET); 
+   signal PS, NS : state_type; 
 begin
    sync_proc: process(CLK, NS)
    begin
@@ -40,10 +40,10 @@ begin
      end if; 
    end process sync_proc; 
 
-   comb_proc: process(PS, RCO1, RCO2, RCO3, BTN, LT)
+   comb_proc: process(PS, RCO1, RCO2, RCO3, BTN)
    begin
       -- Z1: the Moore output; Z2: the Mealy output
-      WE <= '0'; CLR <= '0'; CLR2 <= '0'; EN <= '0'; EN2 <= '0'; SEL <= "00"; PRESET <= "0000"; -- pre-assign the outputs
+      WE <= '0'; CLR1 <= '0'; CLR2 <= '0'; CLR3 <= '0'; EN <= '0'; EN2 <= '0'; SEL <= "00"; PRESET <= "0000"; LD <= '0'; -- pre-assign the outputs
       case PS is 
          when DISPLAY =>    -- items regarding state ST0 
             EN <= '1';           
@@ -52,7 +52,9 @@ begin
                 NS <= DISPLAY; 
             else 
                 NS <= TRANSFER; 
-                CLR <= '1';
+                CLR1 <= '1';
+                CLR2 <= '1';
+                CLR3 <= '1';
             end if;
 				
          when TRANSFER =>    -- items regarding state ST1
@@ -63,16 +65,31 @@ begin
             if (RCO1 = '0') then 
 				   NS <= TRANSFER;   
             else  
-				   NS <= COMPARE;
-				   PRESET <= "0001"; 
-				   LD <= '1';   				   
+                NS <= COMPARE;
+                PRESET <= "0001"; 
+                LD <= '1';			   
             end if; 
 				
          when COMPARE =>    -- items regarding state ST2
-            if (LT = '1') then 
-                NS <= COMPARE;
-                EN <= '1';
-                EN2 <= '1';   
+            if (RCO1 = '1') then
+                NS <= RESET;
+            end if;
+            if (LT = '1') then
+                if (RCO3 = '1') then
+                    NS <= DISPLAY;
+--                elsif (RCO1 = '1') then
+--                    --NS <= RESET;
+--                    EN <= '1';
+--                    EN2 <= '1';
+--                    NS <= COMPARE; 
+--                    CLR1 <= '1';
+--                    PRESET <= "0001";
+--                    LD <= '1';
+                else
+                    NS <= COMPARE;
+                    EN <= '1';
+                    EN2 <= '1'; 
+                end if;
             else  
                 NS <= SWAP1;
                 EN <= '0';                      
@@ -88,24 +105,31 @@ begin
             WE <= '1'; 
             EN <= '0';
             SEL <= "01";
+            
             if (RCO3 = '1') then 
-                NS <= DISPLAY;  
-                CLR <= '1';
-                CLR2 <= '1';
-            elsif (RCO2 = '0' and RCO3 = '0') then
-                NS <= COMPARE;
-                EN2 <= '1';
+                NS <= DISPLAY;
+            elsif(RCO1 = '1') then
+                NS <= RESET;
             else
                 NS <= COMPARE;
-                CLR <= '1';
-                PRESET <= "0001";
-                LD <= '1';
                 EN2 <= '1';
             end if;   
             
+		 when RESET =>
+		      EN <= '1';
+		      NS <= COMPARE;
+		      CLR1 <= '1';
+		      PRESET <= "0001";
+		      EN2 <= '1';
+		      LD <= '1';
+		      
+		      if (RCO3 = '1') then 
+                 NS <= DISPLAY;
+              end if;  
+		 
 		 
          when others => -- the catch all condition
-            WE <= '0'; CLR <= '0'; CLR2 <= '0'; EN <= '0'; EN2 <= '0'; SEL <= "00"; PRESET <= "0000";
+            WE <= '0'; CLR1 <= '0'; CLR2 <= '0'; CLR3 <= '0'; EN <= '0'; EN2 <= '0'; SEL <= "00"; PRESET <= "0000";
       end case; 
 		
    end process comb_proc; 
@@ -116,5 +140,6 @@ begin
            "010" when COMPARE, 
            "011" when SWAP1,
            "100" when SWAP2,
+           "101" when RESET,
            "111" when others; 
 end fsm4;

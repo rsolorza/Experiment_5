@@ -57,7 +57,7 @@ architecture Behavioral of Bubble_Sort is
 
     component my_fsm4
         port (      RCO1, RCO2, RCO3, BTN ,CLK, LT : in  std_logic;  
-                        WE, CLR, CLR2, LD, EN, EN2 : out std_logic;
+                 WE, CLR1, CLR2, CLR3, LD, EN, EN2 : out std_logic;
                                             PRESET : out std_logic_vector (3 downto 0);
                                                  Y : out std_logic_vector (2 downto 0);
                                                SEL : out std_logic_vector (1 downto 0));
@@ -135,10 +135,12 @@ architecture Behavioral of Bubble_Sort is
     signal rco1 : std_logic := '0'; 
     signal rco2 : std_logic := '0'; 
     signal rco3 : std_logic := '0';
+    signal temp : std_logic := '0';
     signal sclk : std_logic := '0'; 
     signal fclk : std_logic := '0'; 
-    signal clr : std_logic := '0'; 
+    signal clr1 : std_logic := '0'; 
     signal clr2 : std_logic := '0';
+    signal clr3 : std_logic := '0';
     signal en : std_logic := '0';
     signal en2 : std_logic := '0'; 
     signal we : std_logic := '0'; 
@@ -148,8 +150,7 @@ architecture Behavioral of Bubble_Sort is
     signal ld : std_logic := '0'; 
 
 begin
-	--rco1 <= (cnt1(0) and cnt1(1) and cnt1(2) and cnt1(3));
-	--rco2 <= (cnt2(0) and not cnt2(1) and not cnt2(2) and not cnt2(3) and not cnt2(4) and cnt2(5) and cnt2(6) and cnt2(7));
+	rco3 <= (cnt3(0) and not cnt3(1) and not cnt3(2) and not cnt3(3) and not cnt3(4) and cnt3(5) and cnt3(6) and cnt3(7));
 	led <= cnt1;
 
    DUAL_PORT_RAM: RegisterFile
@@ -174,8 +175,9 @@ begin
                    CLK => sclk,
                     LT => lt, 
                     WE => we,
-                   CLR => clr,
+                   CLR1 => clr1,
                   CLR2 => clr2,
+                  CLR3 => clr3,
                     EN => en,
                    EN2 => en2,
                     LD => ld,
@@ -184,7 +186,7 @@ begin
                 SEL => sel);
         
     CNTR1: COUNT_4B 
-        port map ( RESET => CLR,
+        port map ( RESET => CLR1,
                    EN => en,
                    CLK => sclk,
                    LD => '0',
@@ -194,24 +196,24 @@ begin
                    RCO => rco1);
  
      CNTR2: COUNT_4B 
-            port map ( RESET => CLR,
+            port map ( RESET => CLR2,
                           EN => en,
                          CLK => sclk,
                           LD => ld,
                           UP => '1',
-                         DIN => PRESET,
+                         DIN => preset,
                         COUNT => cnt2,
                           RCO => rco2);
                                   
     CNTR3: COUNT_8B 
-        port map ( RESET => CLR,
+        port map ( RESET => CLR3,
                       EN => en2,
                      CLK => sclk,
                        LD => '0',
                        UP => '1',
                       DIN => "00000000",
                     COUNT => cnt3,
-                      RCO => rco3);                                 
+                      RCO => temp);                                 
                
     MY_ROM: rom_16X8
         Port map ( ADDR => cnt1, 
@@ -231,7 +233,6 @@ begin
                    SEL => "00",
                    dp_oe => '0',
                    dp => "00",                       
-                   --CLK => sclk,
                    CLK => CLK,
                    SIGN => '0',
                    VALID => '1',
